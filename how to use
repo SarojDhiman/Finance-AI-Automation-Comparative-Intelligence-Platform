@@ -1,0 +1,213 @@
+Vectara Financial Analysis Dashboard (Streamlit + RAG)
+What this app does
+
+This Streamlit dashboard lets you:
+
+Connect to a Vectara corpus using API credentials
+
+Upload one or more PDF financial documents into the corpus
+
+Ask natural-language questions and get answers using RAG (Retrieval-Augmented Generation)
+
+View evidence snippets (top matching sources) for traceability
+
+Extract and compare key financial metrics across documents and export results to CSV
+
+End-to-end Pipeline (How it works)
+1) Connection & Authentication
+
+User inputs in sidebar:
+
+Vectara API Key
+
+Customer ID
+
+Corpus ID
+
+System action
+
+Calls Vectara REST API to verify corpus access
+
+Shows clear error messages for:
+
+401 Unauthorized (invalid key)
+
+403 Forbidden (missing permissions)
+
+404 Not Found (wrong corpus)
+
+2) Document Ingestion Pipeline (PDF Upload)
+
+Input: PDF file(s) selected via Streamlit uploader
+
+Process
+
+Uses Vectara v2 upload endpoint (multipart form-data)
+
+Sends:
+
+file content (application/pdf)
+
+JSON metadata (filename + timestamp)
+
+If v2 upload fails (e.g., permission errors), can switch to Vectara v1 index endpoint as fallback
+
+Output
+
+PDFs are indexed inside the corpus and become searchable
+
+Why this matters
+
+Handles real-world enterprise issues like INDEX permission failures and provides a fallback path.
+
+3) Retrieval + Generation Pipeline (RAG Query Flow)
+
+Input: user question (example: “What is total revenue in FY2024?”)
+
+Process
+
+Retrieval
+
+Query is sent to Vectara
+
+Vectara returns top relevant chunks/snippets with relevance scores
+
+Generation
+
+The retrieved chunks are used to generate a summarized answer (RAG)
+
+The app displays both:
+
+the answer summary
+
+source snippets (evidence)
+
+Output
+
+Generated answer + traceable sources
+
+Stored in chat history (timestamped)
+
+4) Metric Extraction + Comparison Pipeline
+
+Input: selected metrics (default + custom)
+
+Process
+
+Sends a combined query like:
+“financial statements showing: Revenue, Net Profit, Total Assets…”
+
+Reads the top retrieved snippets
+
+Extracts metric values using regex patterns (e.g., Revenue: 1,200.50)
+
+Builds a Pandas DataFrame for comparison
+
+Converts numeric fields and visualizes selected metric
+
+Allows CSV download
+
+Output
+
+Comparison table + chart + downloadable CSV
+
+How to Use (Step-by-step)
+Step 1 — Run the app
+pip install -r requirements.txt
+streamlit run app.py
+
+Step 2 — Connect to Vectara
+
+In the sidebar:
+
+Enter API Key, Customer ID, Corpus ID
+
+Click Connect to Vectara
+
+You should see 🟢 Connected
+
+If you see 403 errors: your API key likely needs INDEX + QUERY + READ permissions.
+
+Step 3 — Upload PDFs
+
+Go to 📤 Upload Files tab:
+
+Select upload method:
+
+V2 API (Recommended)
+
+V1 API (Alternative) if v2 gives permission issues
+
+Upload one or more PDFs
+
+Click Upload to Vectara
+
+Confirm successful upload in the status output
+
+Step 4 — Ask Questions (RAG)
+
+Go to 💬 Query Documents tab:
+
+Type a question
+
+Click Search
+
+You’ll see:
+
+Generated answer summary
+
+Evidence snippets with relevance score
+
+Conversation history
+
+Example queries:
+
+“What is the revenue for FY2024?”
+
+“Summarize the cash flow highlights”
+
+“What are the total liabilities and why did they change?”
+
+Step 5 — Compare Metrics
+
+Go to 📈 Financial Comparison tab:
+
+Select default metrics or add custom ones
+
+Click Generate Comparison
+
+View:
+
+metrics table
+
+chart visualization
+
+download CSV option
+
+Permissions Required (Vectara)
+
+Your API key should have:
+
+✅ Query (for search)
+
+✅ Index (for upload)
+
+✅ Read (to list documents)
+
+If uploads fail with 403, you are missing INDEX permission.
+
+Architecture Summary (1-liner)
+
+Streamlit UI → Vectara Corpus Upload/Index → Vectara Retrieval → RAG Summary + Evidence → Metric Extraction (Regex) → Pandas Comparison + Export
+
+Next improvements (optional, looks senior)
+
+Metric extraction using structured parsing / LLM extraction instead of regex
+
+Document-wise comparison (currently combined query aggregates results)
+
+Add document filters (by filename / date / period)
+
+Add caching for repeated queries
+
+Add authentication / secrets management using Streamlit Secrets
